@@ -156,6 +156,144 @@ The total weight of trash collected by Professor Trash Wheel is `r sum(clean_df 
 The total number of cigarette butts collected by Gwynnda in June of 2022 is `r sum(clean_df |> filter(trash_wheel == "Gwynnda Trash Wheel", month == "June", year == "2022") |> pull(cigarette_butts), na.rm = TRUE)`.
 
 ## Problem 3
+```{r}
+bakers <- read_csv('bakers.csv', na = c("NA", " ")) |>
+  clean_names()|>
+  janitor::clean_names() |>
+  rename(baker = baker_name)
+
+bakes <- read_csv('bakes.csv', na = c("NA", "N/A", " ")) |>
+  clean_names()|>
+  janitor::clean_names()
+
+results <- read_csv('results.csv', skip = 2, na = c("NA", " ")) |>
+  clean_names()|>
+  janitor::clean_names()
+
+viewers <- read_csv('viewers.csv', na = c("NA", " ")) |>
+  clean_names()|>
+  janitor::clean_names()
+```
+
+```{r}
+glimpse(bakers)
+glimpse(bakes)
+glimpse(results)
+glimpse(viewers)
+
+summary(bakers)
+summary(bakes)
+summary(results)
+summary(viewers)
+```
+
+### Use `anti-join` to find who do not have corresponding records
+```{r}
+bakers_missing <- results |>
+  anti_join(bakers, by = c("baker", "series"))
+bakers_missing
+
+bakes_missing <- results |>
+  anti_join(bakes, by = c("baker", "series"))
+bakes_missing
+
+results_missing <- results |>
+  anti_join(results, by = c("baker", "series"))
+results_missing
+```
+
+### Merge datasets
+```{r}
+# Keep first name to merge
+library(tidyverse)
+bakers = mutate(bakers, baker = word(baker, 1))
+
+# Merge to final dataset
+final_df = full_join(bakers, bakes, by = c("baker", "series")) |>
+  full_join(results, by = c("baker", "episode", "series")) |>
+  select(series, episode, baker, baker_age, baker_occupation, hometown, signature_bake, show_stopper, technical, result)
+
+write_csv(final_df, "final_df") # Save the merged dataset
+```
+
+### Analyze dataset
+Viewership per season
+```{r}
+library(ggplot2)
+
+viewers_long <- viewers |>
+  pivot_longer(cols = starts_with("series_"), 
+               names_to = "series", 
+               values_to = "viewership") |>
+  mutate(series = as.numeric(str_remove(series, "series_"))) 
+
+# Plot the viewership per season
+ggplot(viewers_long, aes(x = series, y = viewership)) +
+  geom_line(color = "lightblue") + 
+  geom_point(color = "red") +   
+  labs(title = "Viewership trends per season", 
+       x = "Seasons", 
+       y = "Average viewership") +
+  theme_minimal()
+```
+There is a general increase in viewership from Season 1 to Season 6. The viewership appears to peak around Seasons 4-6.
+After Season 6, there is a decline in viewership. There is a sharpest drop between Seasons 6 and 7, followed by a continued but more mild decline until Season 10.
 
 
+```{r}
+# Remove rows with NA in result
+cleaned_final_df <- final_df |> drop_na(result)
+
+# Box plot of technical scores by result ("in" vs "out")
+ggplot(cleaned_final_df, aes(x = result, y = technical, fill = result)) +
+  geom_boxplot() +
+  labs(title = "Technical Performance by Result (In vs Out)",
+       x = "Result",
+       y = "Technical Performance (1-13)") +
+  theme_minimal() +
+  theme(legend.position = "none")  # Remove legend since the result is on the x-axis
+
+```
+Technical Performance 1-13 shows the range of technical performance scores for each result. A lower score means better performance.
+
+Technical performance is generally better for contestants who stayed in (IN), won Star Baker, or won the competition (WINNER), as seen by the lower median scores.
+Contestants who were eliminated (OUT) performed worse in technical challenges, as indicated by higher median scores.
+The narrow range of scores for the winner shows that technical performance is a good predictor of success in the competition.
+
+### Create a reader-friendly table showing the star baker or winner of each episode in Seasons 5 through 10. Comment on this table – were there any predictable overall winners? Any surprises?
+```{r}
+# Filter the data for Seasons 5 through 10 and focus on Star Baker and Winner results
+star_baker_table <- final_df |>
+  filter(series >= 5 & series <= 10) |> 
+  filter(result %in% c("STAR BAKER", "WINNER")) |>
+  select(series, episode, baker, result) |>
+  arrange(series, episode)
+
+# Display the table in markdown
+knitr::kable(star_baker_table, 
+             caption = "Star Baker and Winner for Each Episode in Seasons 5 through 10",
+             col.names = c("Season", "Episode", "Baker", "Result"))
+```
+
+Predictable results:
+
+Seasons 6, 7, and 9 show predictable outcomes, where the bakers who won multiple Star Baker titles (Nadiya, Candice, Rahul) went on to win the entire season.
+
+
+Surprising results:
+
+Season 5: Richard’s 5 Star Baker titles didn’t make him to a final victory.
+Season 10: David didn't have any Star Baker title, but he wins in the end. Steph's consistent dominance throughout the season, with 4 titles, made her the likely candidate for the winner, but she didn't win.
+
+
+In general, while strong performances often correlate with final success, surprises still happen.
+
+### Averages of viewership for series 1 and 5
+```{r}
+av_1 = mean(pull(viewers, series_1), na.rm = TRUE)
+av_5 = mean(pull(viewers, series_5), na.rm = TRUE)
+av_1
+av_5
+```
+The average viewership for series 1 and 5 are `r av_1` and `r av_5`
 
