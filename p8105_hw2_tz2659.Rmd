@@ -2,7 +2,7 @@
 title: "p8105_hw2_tz2659"
 author: "Tracy Zhu"
 date: "2024-10-02"
-output: html_document
+output: md_document
 ---
 
 ```{r}
