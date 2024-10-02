@@ -5,11 +5,17 @@ date: "2024-10-02"
 output: html_document
 ---
 
+```{r}
+file_path <- "E:/Tracy/fall 2024/P8105 Data Science/p8105_hw2_tz2659/"
+options(scipen=999) # Cancel scientific notation when describing dataset
+```
+
+
 ## Problem 1
 ```{r}
 library(readr)
 library(dplyr)
-nyc_subway_data <- read_csv("E:/Tracy/fall 2024/P8130 Biostatistical Methods I/p8105_hw2_tz2659/NYC_Transit_Subway_Entrance_And_Exit_Data.csv")
+nyc_subway_data <- read_csv("NYC_Transit_Subway_Entrance_And_Exit_Data.csv")
 ```
 
 ### Data overview
@@ -88,3 +94,68 @@ Results: \
 2. Out of the distinct stations, `r ada_stations` stations are ADA compliant.\
 3. Approximately `r round(no_vend * 100, 2)`% of station entrances/exits without vending machines allow entry.\
 4. There are `r atrain_stations` distinct stations that serve the A train. And `r atrain_ada` stations are ADA compliant in these stations. 
+
+## Problem 2
+*Mr. Trash Wheel*
+```{r}
+library(readxl)
+library(dplyr)
+library(janitor)
+
+mr_df <- read_excel("202409 Trash Wheel Collection Data.xlsx", 
+                    sheet = "Mr. Trash Wheel", range = "A2:N653") |>
+  janitor::clean_names() |>
+  mutate(
+    trash_wheel = "Mr. Trash Wheel",  
+    sports_balls = as.integer(round(sports_balls)), # Round sports balls to integer
+    year = as.numeric(year)  
+  )
+```
+
+*Professor Trash Wheel*
+```{r}
+pf_df <- read_excel("202409 Trash Wheel Collection Data.xlsx", 
+                    sheet = "Professor Trash Wheel", range = "A2:M121") |>
+  janitor::clean_names() |>
+  mutate(
+    trash_wheel = "Professor Trash Wheel" 
+  )
+```
+
+*Gwynnda Trash Wheel*
+```{r}
+gw_df <- read_excel("202409 Trash Wheel Collection Data.xlsx", 
+                                       sheet = "Gwynnda Trash Wheel", range = "A2:L265") |>
+  janitor::clean_names() |>
+  mutate(
+    trash_wheel = "Gwynnda Trash Wheel" 
+  )
+```
+
+*Combine datasets*
+```{r}
+combined_df <- bind_rows(mr_df, pf_df, gw_df)
+
+head(combined_df)
+```
+
+*Clean the combined dataset again*
+```{r}
+ # Filter out rows without dumpster-specific data
+clean_df <- combined_df |>
+  filter(!is.na(dumpster))
+head(clean_df)
+```
+
+### Data description
+
+The total dataset contains information on `r nrow(clean_df)` observations from three Trash Wheels: Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel. The dataset has key variables such as date of collection (`date`), total weight of trash collected (`weight_tons`), and number of plastic bottles (`plastic_bottles`) and cigarette butts (`cigarette_butts`) collected.
+
+The total weight of trash collected by Professor Trash Wheel is `r sum(clean_df |> filter(trash_wheel == "Professor Trash Wheel") |> pull(weight_tons), na.rm = TRUE)` tons. 
+
+The total number of cigarette butts collected by Gwynnda in June of 2022 is `r sum(clean_df |> filter(trash_wheel == "Gwynnda Trash Wheel", month == "June", year == "2022") |> pull(cigarette_butts), na.rm = TRUE)`.
+
+## Problem 3
+
+
+
