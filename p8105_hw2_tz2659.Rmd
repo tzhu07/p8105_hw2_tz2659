@@ -26,6 +26,7 @@ head(nyc_subway_data)
 n_rows
 n_cols
 ```
+
 ### Data cleaning
 ```{r}
 # Select columns
@@ -39,6 +40,7 @@ cleaned_data <- cleaned_data %>%
 
 head(cleaned_data)
 ```
+
 ### How many distinct stations are there? 
 ```{r}
 dist_stations <- cleaned_data %>%
@@ -217,6 +219,7 @@ write_csv(final_df, "final_df") # Save the merged dataset
 ```
 
 ### Analyze dataset
+
 Viewership per season
 ```{r}
 library(ggplot2)
@@ -227,7 +230,6 @@ viewers_long <- viewers |>
                values_to = "viewership") |>
   mutate(series = as.numeric(str_remove(series, "series_"))) 
 
-# Plot the viewership per season
 ggplot(viewers_long, aes(x = series, y = viewership)) +
   geom_line(color = "lightblue") + 
   geom_point(color = "red") +   
@@ -239,9 +241,8 @@ ggplot(viewers_long, aes(x = series, y = viewership)) +
 There is a general increase in viewership from Season 1 to Season 6. The viewership appears to peak around Seasons 4-6.
 After Season 6, there is a decline in viewership. There is a sharpest drop between Seasons 6 and 7, followed by a continued but more mild decline until Season 10.
 
-
+Technical performance vs result
 ```{r}
-# Remove rows with NA in result
 cleaned_final_df <- final_df |> drop_na(result)
 
 # Box plot of technical scores by result ("in" vs "out")
@@ -269,7 +270,6 @@ star_baker_table <- final_df |>
   select(series, episode, baker, result) |>
   arrange(series, episode)
 
-# Display the table in markdown
 knitr::kable(star_baker_table, 
              caption = "Star Baker and Winner for Each Episode in Seasons 5 through 10",
              col.names = c("Season", "Episode", "Baker", "Result"))
