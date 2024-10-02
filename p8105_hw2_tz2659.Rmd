@@ -1,0 +1,90 @@
+---
+title: "p8105_hw2_tz2659"
+author: "Tracy Zhu"
+date: "2024-10-02"
+output: html_document
+---
+
+## Problem 1
+```{r}
+library(readr)
+library(dplyr)
+nyc_subway_data <- read_csv("E:/Tracy/fall 2024/P8130 Biostatistical Methods I/p8105_hw2_tz2659/NYC_Transit_Subway_Entrance_And_Exit_Data.csv")
+```
+
+### Data overview
+```{r}
+n_rows <- nrow(nyc_subway_data)
+n_cols <- ncol(nyc_subway_data)
+head(nyc_subway_data)
+n_rows
+n_cols
+```
+### Data cleaning
+```{r}
+# Select columns
+cleaned_data <- nyc_subway_data %>%
+  select(Line, `Station Name`, `Station Latitude`, `Station Longitude`, 
+         Route1, Route2, Route3, Entry, Vending, `Entrance Type`, ADA)
+
+# Convert the entry variable from character to a logical variable 
+cleaned_data <- cleaned_data %>%
+  mutate(Entry = ifelse(Entry == "YES", TRUE, FALSE))
+
+head(cleaned_data)
+```
+### How many distinct stations are there? 
+```{r}
+dist_stations <- cleaned_data %>%
+  distinct(`Station Name`, Line) %>%
+  nrow()
+
+dist_stations
+```
+
+### How many stations are ADA compliant?
+```{r}
+ada_stations <- cleaned_data %>%
+  filter(ADA == TRUE) %>%
+  distinct(`Station Name`, Line) %>%
+  nrow()
+
+ada_stations
+```
+
+### What proportion of station entrances / exits without vending allow entrance?
+```{r}
+no_vend <- cleaned_data %>%
+  filter(Vending == "NO") %>%
+  nrow() / nrow(cleaned_data)
+
+no_vend
+```
+
+### How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
+```{r}
+# Distinct stations that serve the A train
+atrain_stations <- cleaned_data %>%
+  filter(Route1 == "A" | Route2 == "A" | Route3 == "A") %>%
+  distinct(`Station Name`, Line) %>%
+  nrow()
+
+# ADA compliant stations serving the A train
+atrain_ada <- cleaned_data %>%
+  filter((Route1 == "A" | Route2 == "A" | Route3 == "A") & ADA == TRUE) %>%
+  distinct(`Station Name`, Line) %>%
+  nrow()
+
+atrain_stations
+atrain_ada
+```
+
+The dataset contains information on `r nrow(nyc_subway_data)` observations from NYC subway entrances and exits across different stations. There are `r ncol(nyc_subway_data)` variables, primarily capturing details such as station name and line, station latitude and longitude, routes, entry permissions and vending machine availability, ADA compliance, etc.
+
+After data cleaning, this dataset contains `r nrow(cleaned_data)` rows and `r ncol(cleaned_data)` columns.
+
+Results: \
+1. There are `r dist_stations` distinct stations based on station name and line.\
+2. Out of the distinct stations, `r ada_stations` stations are ADA compliant.\
+3. Approximately `r round(no_vend * 100, 2)`% of station entrances/exits without vending machines allow entry.\
+4. There are `r atrain_stations` distinct stations that serve the A train. And `r atrain_ada` stations are ADA compliant in these stations. 
